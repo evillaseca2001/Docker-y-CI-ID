@@ -1,22 +1,37 @@
 #!/bin/bash
 
-mkdir tempdir
-mkdir tempdir/templates
-mkdir tempdir/static
+rm -rf tempdir
+
+mkdir -p tempdir/templates
+mkdir -p tempdir/static
 
 cp sample_app.py tempdir/.
 cp -r templates/* tempdir/templates/.
 cp -r static/* tempdir/static/.
 
-echo "FROM python" >> tempdir/Dockerfile
-echo "RUN pip install flask" >> tempdir/Dockerfile
-echo "COPY  ./static /home/myapp/static/" >> tempdir/Dockerfile
-echo "COPY  ./templates /home/myapp/templates/" >> tempdir/Dockerfile
-echo "COPY  sample_app.py /home/myapp/" >> tempdir/Dockerfile
-echo "EXPOSE 8080" >> tempdir/Dockerfile
-echo "CMD python /home/myapp/sample_app.py" >> tempdir/Dockerfile
+cat > tempdir/Dockerfile <<'EOF'
+FROM python:3.9-slim
+
+RUN pip install --no-cache-dir --progress-bar off flask
+
+COPY ./static /app/static/
+COPY ./templates /app/templates/
+COPY sample_app.py /app/
+
+WORKDIR /app
+
+EXPOSE 8888
+
+CMD ["python", "sample_app.py"]
+EOF
 
 cd tempdir
-docker build -t sampleapp .
-docker run -t -d -p 8080:8080 --name samplerunning sampleapp
-docker ps -a 
+
+docker build -t evaluacion2 .
+
+docker rm -f evaluacion2 2>/dev/null || true
+
+docker run -d \
+    -p 8888:8888 \
+    --name evaluacion2 \
+    evaluacion2
